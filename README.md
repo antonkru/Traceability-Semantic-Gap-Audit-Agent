@@ -37,6 +37,8 @@ A sample output is included at [docs/sample-traceability-audit-2026-05-13.md](do
 
 Each agent maintains its own project-scoped memory under `.claude/agent-memory/<agent-name>/`, building institutional knowledge across audits — requirement ID conventions, architectural patterns, recurring gap types, stakeholder preferences, etc. Memory is version-controlled and shared with the team.
 
+All four agents share a single memory policy ([.claude/agent-memory-policy.md](.claude/agent-memory-policy.md)) that defines what is safe to save (naming conventions, ID schemes, high-level architectural patterns) and what is forbidden (secrets, PII, full file contents, brittle paths). The agents look up this file at runtime — see the install notes below for where it needs to live for project-level vs. user-level installs.
+
 ---
 
 ## How to Use
@@ -48,25 +50,45 @@ Each agent maintains its own project-scoped memory under `.claude/agent-memory/<
 
 ### Installation
 
-> **Suggested:** place the agent files in your **user-level** agents folder so they are available across all projects:
->
-> ```
-> C:\Users\<user>\.claude\agents\
-> ```
->
-> On macOS / Linux this is `~/.claude/agents/`.
->
-> Copy the four `.md` files from [.claude/agents/](.claude/agents/) into that directory. Alternatively, keep them in `<your-project>/.claude/agents/` to scope them to a single repository.
+Two files need to be in place:
+
+1. The four agent definitions — go into `.claude/agents/`.
+2. The shared memory policy ([.claude/agent-memory-policy.md](.claude/agent-memory-policy.md)) — goes one level up, next to `.claude/agents/`.
+
+Pick **one** of the install modes below.
+
+#### User-level install (suggested — available across all projects)
+
+Agents go in `C:\Users\<user>\.claude\agents\` on Windows or `~/.claude/agents/` on macOS / Linux; the policy file sits next to that folder (one level up).
 
 ```powershell
-# Windows (PowerShell) — user-scope install
-Copy-Item .\.claude\agents\*.md "$env:USERPROFILE\.claude\agents\" -Force
+# Windows (PowerShell)
+Copy-Item .\.claude\agents\*.md          "$env:USERPROFILE\.claude\agents\"        -Force
+Copy-Item .\.claude\agent-memory-policy.md "$env:USERPROFILE\.claude\"             -Force
 ```
 
 ```bash
-# macOS / Linux — user-scope install
-cp .claude/agents/*.md ~/.claude/agents/
+# macOS / Linux
+cp .claude/agents/*.md            ~/.claude/agents/
+cp .claude/agent-memory-policy.md ~/.claude/
 ```
+
+#### Project-level install (scope to a single repository)
+
+Keep both files inside the target project's `.claude/` directory — that's exactly the layout this repository ships:
+
+```
+<your-project>/
+└── .claude/
+    ├── agent-memory-policy.md
+    └── agents/
+        ├── traceability-semantic-gap-coordinator.md
+        ├── srs-requirement-elicitor.md
+        ├── architect-unit-scanner.md
+        └── traceability-semantic-gap-auditor.md
+```
+
+The agents themselves try the project-level location first and fall back to the user-level one, so mixing modes works — but keeping the policy file alongside the agents that reference it is the cleanest setup.
 
 ### Running an audit
 
@@ -153,6 +175,7 @@ This makes the output suitable as evidence for compliance reviews, release gates
 ```
 .
 ├── .claude/
+│   ├── agent-memory-policy.md                        # shared memory policy (single source of truth)
 │   └── agents/                                       # the four sub-agent definitions
 │       ├── traceability-semantic-gap-coordinator.md  # orchestrator (opus)
 │       ├── srs-requirement-elicitor.md               # Elicitor (sonnet)
