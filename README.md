@@ -1,2 +1,164 @@
-# Traceability-Semantic-Gap-Audit-Agent
-Traceability &amp; Semantic Gap Audit Orchestrator, agentic elite systems engineering auditor with deep expertise in requirements engineering, software architecture analysis, and verification &amp; validation (V&amp;V) processes. You operate at the intersection of formal traceability standards (ISO/IEC/IEEE 29148, IEC 62304, DO-178C, ISO 26262)
+# Traceability & Semantic Gap Audit Agentic Workflow
+
+An agentic, multi-agent workflow for Claude Code that performs **end-to-end traceability audits** across Software Requirement Specifications (SRS), Software Design Specifications (SDS), source code, and test suites. It produces a bidirectional **Traceability Matrix** and a **Semantic Gap Analysis** report — surfacing orphan requirements, hallucinated features, weak links, and test coverage gaps.
+
+The workflow is grounded in formal traceability standards: **ISO/IEC/IEEE 29148**, **IEC 62304**, **DO-178C**, and **ISO 26262**. It is **stack-agnostic** — the agents detect the project's languages, frameworks, and tooling from the codebase and adapt accordingly. Backend services (any language), frontend frameworks, mobile apps, embedded firmware, data / ML pipelines, and infrastructure-as-code are all in scope.
+
+---
+
+## Overview
+
+This repository ships four coordinated Claude Code sub-agents that together act as an elite systems-engineering auditor:
+
+| Agent | Role | Model |
+|---|---|---|
+| [`traceability-semantic-gap-coordinator`](.claude/agents/traceability-semantic-gap-coordinator.md) | **Orchestrator.** Scopes the audit, invokes the three workers, synthesizes the Traceability Matrix, and writes the final findings report. | `opus` |
+| [`srs-requirement-elicitor`](.claude/agents/srs-requirement-elicitor.md) | **Elicitor.** Parses SRS documents and extracts atomic, uniquely-identified, traceable requirements (FR / NFR / IR / CR / BR / DR). | `sonnet` |
+| [`architect-unit-scanner`](.claude/agents/architect-unit-scanner.md) | **Architect.** Scans SDS docs and the codebase — across any language or framework (services, controllers, modules, packages, components, hooks, handlers, jobs, IaC resources, ORM/schema definitions, etc.) — to produce a canonical inventory of architectural units. | `sonnet` |
+| [`traceability-semantic-gap-auditor`](.claude/agents/traceability-semantic-gap-auditor.md) | **Auditor / Critic.** Performs semantic gap analysis: detects orphan requirements, hallucinated features, semantic drift, and test coverage gaps. Rates severity (Critical / High / Medium / Low). | `sonnet` |
+
+### What the workflow produces
+
+A structured audit report containing:
+
+1. **Executive Summary** — coverage percentages, critical gap counts, overall health score
+2. **Traceability Matrix** — `Requirement ID | Summary | Design Element(s) | Code Artifact(s) | Test(s) | Coverage Status | Confidence`
+   - Coverage Status: `COMPLETE` / `PARTIAL` / `ORPHAN` / `HALLUCINATED` / `WEAK_LINK`
+   - Confidence: `HIGH` / `MEDIUM` / `LOW`
+3. **Orphan Requirements** — requirements with no design / code / test coverage
+4. **Hallucinated Features** — code or design elements with no backing requirement
+5. **Semantic Drift Cases** — mappings that exist but where intent has diverged
+6. **Risk Assessment** — gaps ranked by safety / security / compliance / business impact
+7. **Recommended Next Steps** — concrete, actionable items
+
+A sample output is included at [docs/sample-traceability-audit-2026-05-13.md](docs/sample-traceability-audit-2026-05-13.md).
+
+### Persistent agent memory
+
+Each agent maintains its own project-scoped memory under `.claude/agent-memory/<agent-name>/`, building institutional knowledge across audits — requirement ID conventions, architectural patterns, recurring gap types, stakeholder preferences, etc. Memory is version-controlled and shared with the team.
+
+---
+
+## How to Use
+
+### Prerequisites
+
+- [Claude Code](https://claude.com/claude-code) installed
+- A project containing some combination of SRS docs, SDS docs, source code (any language / framework), and test suites
+
+### Installation
+
+> **Suggested:** place the agent files in your **user-level** agents folder so they are available across all projects:
+>
+> ```
+> C:\Users\<user>\.claude\agents\
+> ```
+>
+> On macOS / Linux this is `~/.claude/agents/`.
+>
+> Copy the four `.md` files from [.claude/agents/](.claude/agents/) into that directory. Alternatively, keep them in `<your-project>/.claude/agents/` to scope them to a single repository.
+
+```powershell
+# Windows (PowerShell) — user-scope install
+Copy-Item .\.claude\agents\*.md "$env:USERPROFILE\.claude\agents\" -Force
+```
+
+```bash
+# macOS / Linux — user-scope install
+cp .claude/agents/*.md ~/.claude/agents/
+```
+
+### Running an audit
+
+From inside the project you want to audit, invoke the orchestrator. The simplest form:
+
+```
+Run a full traceability and semantic gap audit on this project.
+```
+
+Claude Code will route this to the **`traceability-semantic-gap-coordinator`**, which will:
+
+1. **Scope** — confirm which SRS, SDS, code paths, and test directories to analyze (it will ask if anything is ambiguous)
+2. **Elicit** — invoke `srs-requirement-elicitor` to extract atomic requirements
+3. **Scan** — invoke `architect-unit-scanner` to catalog design elements and code units
+4. **Audit** — invoke `traceability-semantic-gap-auditor` for semantic gap analysis
+5. **Synthesize** — produce the Traceability Matrix and findings report
+6. **Save** — write the report to a markdown file (asks where, or honors a path you specified)
+
+### Example prompts
+
+```
+We just merged the payment processing feature.
+Verify everything traces from requirements to tests and save the
+report to docs/traceability-payments-audit.md
+```
+
+```
+Compliance review next week — identify any orphan requirements or
+code that doesn't trace back to a requirement.
+```
+
+```
+Re-elicit requirements from docs/SRS.md only — the file was just
+updated and I want to see what's new before re-running the audit.
+```
+(this routes straight to the `srs-requirement-elicitor`)
+
+### Invoking sub-agents directly
+
+Each agent is independently usable:
+
+- **Just need the atomic requirements list?** Ask for the `srs-requirement-elicitor`.
+- **Just need an architectural inventory?** Ask for the `architect-unit-scanner`.
+- **Already have requirements & inventory, need only the gap analysis?** Ask for the `traceability-semantic-gap-auditor`.
+
+---
+
+## What gets scanned
+
+The agents detect the stack from the codebase and adapt their heuristics. They look for:
+
+| Artifact | Typical locations |
+|---|---|
+| **SRS** | `SRS.md`, `requirements.md`, `docs/requirements/`, `srs/` |
+| **SDS** | `SDS.md`, `docs/design/`, `docs/architecture/`, ADRs |
+| **Backend / services** | projects, packages, modules, namespaces; controllers / route handlers / endpoints (REST, gRPC, GraphQL, WebSocket); services, repositories, ORM contexts and entities; middleware / interceptors; DI registrations; background workers, cron jobs, queue consumers; CLI entry points |
+| **Frontend / UI** | components (function / class / web-component), hooks / composables, contexts / providers, routes / pages / layouts, state stores, feature folders, design-system modules |
+| **Mobile** | screens / view controllers / activities / fragments, view models, navigation graphs, platform-specific modules |
+| **Data / ML** | pipelines, DAGs, jobs, transforms, feature stores, training / inference scripts, model artifacts |
+| **Infrastructure / platform** | IaC modules (Terraform, Pulumi, CDK, Bicep, CloudFormation), Kubernetes manifests, Helm charts, container definitions, CI/CD pipeline stages, serverless function definitions |
+| **API / schema** | OpenAPI, GraphQL SDL, protobuf, AsyncAPI, JSON Schema |
+| **Tests** | any framework — xUnit / NUnit / MSTest, Jest / Vitest / Playwright, pytest / unittest, Go test, JUnit, RSpec, Mocha, etc. |
+
+If the stack is uncommon or partially documented, the agents still attempt a code-only inventory using universal cues (file structure, build-manifest dependency graphs, public exports, entry-point declarations) and explicitly flag the absence of expected artifacts.
+
+---
+
+## Standards alignment
+
+The workflow's elicitation, classification, and gap-analysis rules follow:
+
+- **ISO/IEC/IEEE 29148** — requirements engineering
+- **IEEE 830** — SRS structure
+- **IEC 62304** — medical device software lifecycle
+- **DO-178C** — airborne software
+- **ISO 26262** — automotive functional safety
+
+This makes the output suitable as evidence for compliance reviews, release gates, and formal V&V processes.
+
+---
+
+## Repository layout
+
+```
+.
+├── .claude/
+│   └── agents/                                       # the four sub-agent definitions
+│       ├── traceability-semantic-gap-coordinator.md  # orchestrator (opus)
+│       ├── srs-requirement-elicitor.md               # Elicitor (sonnet)
+│       ├── architect-unit-scanner.md                 # Architect (sonnet)
+│       └── traceability-semantic-gap-auditor.md      # Auditor/Critic (sonnet)
+├── docs/
+│   └── sample-traceability-audit-2026-05-13.md       # example output
+└── README.md
+```
