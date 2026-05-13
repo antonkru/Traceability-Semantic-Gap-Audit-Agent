@@ -21,15 +21,16 @@ This repository ships four coordinated Claude Code sub-agents that together act 
 
 A structured audit report containing:
 
-1. **Executive Summary** — coverage percentages, critical gap counts, overall health score
-2. **Traceability Matrix** — `Requirement ID | Summary | Design Element(s) | Code Artifact(s) | Test(s) | Coverage Status | Confidence`
+1. **Coordination Log** — which sub-agents ran, what sources they consumed, and what each one produced
+2. **Executive Summary** — coverage percentages, critical gap counts, overall health score
+3. **Traceability Matrix** — `Requirement ID | Summary | Design Element(s) | Code Artifact(s) | Test(s) | Coverage Status | Confidence`
    - Coverage Status: `COMPLETE` / `PARTIAL` / `ORPHAN` / `HALLUCINATED` / `WEAK_LINK`
    - Confidence: `HIGH` / `MEDIUM` / `LOW`
-3. **Orphan Requirements** — requirements with no design / code / test coverage
-4. **Hallucinated Features** — code or design elements with no backing requirement
-5. **Semantic Drift Cases** — mappings that exist but where intent has diverged
-6. **Risk Assessment** — gaps ranked by safety / security / compliance / business impact
-7. **Recommended Next Steps** — concrete, actionable items
+4. **Orphan Requirements** — requirements with no design / code / test coverage
+5. **Hallucinated Features** — code or design elements with no backing requirement
+6. **Semantic Drift Cases** — mappings that exist but where intent has diverged
+7. **Risk Assessment** — gaps ranked by safety / security / compliance / business impact
+8. **Recommended Next Steps** — concrete, actionable items
 
 A sample output is included at [docs/sample-traceability-audit-2026-05-13.md](docs/sample-traceability-audit-2026-05-13.md).
 
