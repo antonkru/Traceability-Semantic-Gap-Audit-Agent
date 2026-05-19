@@ -17,6 +17,10 @@ This repository ships four coordinated Claude Code sub-agents that together act 
 | [`architect-unit-scanner`](.claude/agents/architect-unit-scanner.md) | **Architect.** Scans SDS docs and the codebase — across any language or framework (services, controllers, modules, packages, components, hooks, handlers, jobs, IaC resources, ORM/schema definitions, etc.) — to produce a canonical inventory of architectural units. | `sonnet` |
 | [`traceability-semantic-gap-auditor`](.claude/agents/traceability-semantic-gap-auditor.md) | **Auditor / Critic.** Performs semantic gap analysis: detects orphan requirements, hallucinated features, semantic drift, and test coverage gaps. Rates severity (Critical / High / Medium / Low). | `sonnet` |
 
+### Why sub-agents (instead of one long prompt)
+
+A traceability audit is the kind of task where prompting Claude Code directly tends to degrade: the model has to hold the full SRS, the full SDS, the codebase scan, the test inventory, and the gap-analysis rubric in a single context — and then critique its own work. Splitting the job across four specialized sub-agents produces measurably better results because each agent gets (a) a **focused system prompt** tuned to one role (requirements elicitation, architectural scanning, or critical gap analysis) instead of a generalist instruction set, (b) an **isolated context window** so large source documents don't crowd out reasoning or trigger premature summarization, (c) the **right model for the job** (`opus` for orchestration and synthesis, `sonnet` for the high-throughput worker passes), and (d) **independent review** — the Auditor agent critiques artifacts it did not produce, eliminating the self-confirmation bias that a single-pass prompt almost always exhibits. The result is higher recall of orphan requirements and hallucinated features, more honest confidence scoring, and a Traceability Matrix that holds up under compliance review.
+
 ### What the workflow produces
 
 A structured audit report containing:
